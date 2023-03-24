@@ -1,0 +1,8 @@
+dallas_data <- read.csv("dallas_crime.csv")
+denver_data <- read.csv("denver_data.csv")
+
+denver_data <- denver_data[, c(- 1, - 2, - 3, - 4)]
+
+names(dallas_data) <- c("IncidentNum", "ArrestYear", "ArrestDate", "ArrestTime", "ArrestAddress", "ArrestZipcode", "Latitude", "Longitude", "ArrestCity", "ArrestState", "ArrestLocation", "ArrestWeapon", "ArresteeAge", "ArresteeRace", "ArresteeSex", "DrugRelated", "DrugType")
+
+names(denver_data) <- c("OffenseTypeId", "OffenseCategoryId", "FirstOccuranceDate", "LastOccuranceDate", "ReportedDate", "IncidentAddress", "Geo_x", "Geo_y", "Geo_lon", "Geo-lat", "DistrictId", "PrecinctId", "NeighborhoodId", "IsCrime", "IsTraffic", "VictimCount")
