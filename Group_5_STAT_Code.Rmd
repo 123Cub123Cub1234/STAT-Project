@@ -1,0 +1,17 @@
+---
+title: "STAT Project Group 5"
+author: "Avinash Sriram"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+# Data Preparation
+```{r}
+setwd("C:\\Users\\NashS\\OneDrive\\Documents\\STAT 3355")
+
+dallas_data <- read.csv("dallas_crime.csv")
+denver_data <- read.csv("denver_data.csv")
+
+
+
+```
