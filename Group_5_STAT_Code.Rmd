@@ -16,4 +16,15 @@ names(dallas_data) <- c("IncidentNum", "ArrestYear", "ArrestDate", "ArrestTime",
 
 names(denver_data) <- c("IncidentId", "OffenseId", "OffenseCode", "OffenseCodeExtension", "OffenseTypeId", "OffenseCategoryId", "FirstOccuranceDate", "LastOccuranceDate", "ReportedDate", "IncidentAddress", "Geo_x", "Geo_y", "Geo_lon", "Geo-lat", "DistrictId", "PrecinctId", "NeighborhoodId", "IsCrime", "IsTraffic", "VictimCount")
 
+denver_data <- denver_data[, c(- 1, - 2, - 3, - 4)]
+```
+
+# Load Necessary Packages
+```{r}
+library(tidyverse)
+```
+
+# Question 1
+```{r}
+
 ```
