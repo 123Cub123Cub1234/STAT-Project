@@ -1,0 +1,20 @@
+library(stringr)
+library(dplyr)
+denver_data$DrugRelated <- factor(denver_data$DrugRelated)
+denver_data$OffenseTypeId <- factor(denver_data$OffenseTypeId)
+dallas_data$DrugType <- factor(dallas_data$DrugType)
+dallas_data$DrugRelated <- factor(dallas_data$DrugRelated)
+denver_drugs <- filter(denver_data, DrugRelated == "drug-alcohol")
+denver_drugs <- denver_drugs[which(denver_drugs$OffenseTypeId != "liquor-possession"),]
+denver_drugs <- denver_drugs[which(denver_drugs$OffenseTypeId != "liquor-sell"),]
+dallas_data[dallas_data == ""] <- NA
+dallas_drugs <- filter(dallas_data, DrugRelated == "Yes")
+denver_drugs$DrugRelated <- str_replace(denver_drugs$DrugRelated, "drug-alcohol", "Yes")
+City = c("Denver")
+denver_drugs2 <- cbind(denver_drugs, City)
+City = c("Dallas")
+dallas_drugs2 <- cbind(dallas_drugs, City)
+
+city_drugs <- full_join(denver_drugs2, dallas_drugs2)
+library(ggplot2)
+ggplot(data = city_drugs) + geom_bar(mapping = aes(x = DrugRelated, fill = as.factor(City)), position = "fill")
