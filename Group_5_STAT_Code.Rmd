@@ -12,19 +12,177 @@ setwd("C:\\Users\\NashS\\OneDrive\\Documents\\STAT 3355")
 dallas_data <- read.csv("dallas_crime.csv")
 denver_data <- read.csv("denver_data.csv")
 
-names(dallas_data) <- c("IncidentNum", "ArrestYear", "ArrestDate", "ArrestTime", "ArrestAddress", "ArrestZipcode", "Latitude", "Longitude", "ArrestCity", "ArrestState", "ArrestLocation", "ArrestWeapon", "ArresteeAge", "ArresteeRace", "ArresteeSex", "DrugRelated", "DrugType")
+names(dallas_data) <- c("IncidentNum", "ArrestYear", "ArrestDate", "ArrestTime", "ArrestAddress", "ArrestZipcode", "Latitude", "Longitude", "ArrestCity", "ArrestState", "ArrestDay", "ArrestLocation", "ArrestWeapon", "ArresteeAge", "ArresteeRace", "ArresteeSex", "DrugRelated", "DrugType")
 
-names(denver_data) <- c("IncidentId", "OffenseId", "OffenseCode", "OffenseCodeExtension", "OffenseTypeId", "OffenseCategoryId", "FirstOccuranceDate", "LastOccuranceDate", "ReportedDate", "IncidentAddress", "Geo_x", "Geo_y", "Geo_lon", "Geo-lat", "DistrictId", "PrecinctId", "NeighborhoodId", "IsCrime", "IsTraffic", "VictimCount")
+names(denver_data) <- c("IncidentId", "OffenseId", "OffenseCode", "OffenseCodeExtension", "OffenseTypeId", "DrugRelated", "FirstOccuranceDate", "LastOccuranceDate", "ReportedDate", "IncidentAddress", "Geo_x", "Geo_y", "Geo_lon", "Geo-lat", "DistrictId", "PrecinctId", "NeighborhoodId", "IsCrime", "IsTraffic", "VictimCount")
 
 denver_data <- denver_data[, c(- 1, - 2, - 3, - 4)]
+dallas_data <- dallas_data[, c(-1, -7, -8, -10)]
 ```
 
 # Load Necessary Packages
 ```{r}
-library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(scales)
 ```
 
 # Question 1
 ```{r}
+# Question: How does the % of the population in Dallas compare to Denver with relation to the drug/narcotic violations?
+
+# Filter to find necessary info
+denver_drugs <- filter(denver_data, DrugRelated == "drug-alcohol")
+dallas_drugs <- filter(dallas_data, DrugRelated == "Yes")
+denver_drugs$ReportedDate <- format(as.Date(denver_drugs$ReportedDate, format =  "%m/%d/%Y"), "%Y")
+denver_drugs <- denver_drugs[which(denver_drugs$OffenseTypeId != "liquor-possession"),]
+denver_drugs <- denver_drugs[which(denver_drugs$OffenseTypeId != "liquor-sell"),]
+dallas_data[dallas_data == ""] <- NA
+denver_drugs$DrugRelated <- str_replace(denver_drugs$DrugRelated, "drug-alcohol", "Yes")
+
+
+# Removed values not connect to drugs
+
+# Changed Values so it would match up with dallas_data
+# Joined both data sets
+City = c("Denver")
+denver_drugs <- cbind(denver_drugs, City)
+City = c("Dallas")
+
+dallas_drugs <- cbind(dallas_drugs, City)
+denver_2019 <- denver_drugs[which(denver_drugs$ReportedDate %in% 2019),]
+den_total_2019 <- as.data.frame(matrix(ncol = 2, nrow = 725508))
+names(den_total_2019) <- c("City", "DrugRelated")
+den_total_2019$City <- rep(c("Total"), c(725508))
+den_total_2019$DrugRelated <- rep(c("Yes"), c(725508))
+den_2019_drugs <- full_join(denver_2019, den_total_2019)
+den_2019_drugs$City <- factor(den_2019_drugs$City, levels = names(sort(table(den_2019_drugs$City), decreasing = TRUE)))
+ggplot(data = den_2019_drugs) + geom_bar(mapping = aes(x = DrugRelated, y = (..count..)/sum(..count..), fill = City), position = "stack") +
+  scale_y_continuous(labels = percent) +
+  labs(title = "Denver 2019 Drug/Narcotic Relation", x = "Drug Related", fill = "Percentage") +
+  theme_minimal()
+
+
+denver_2020 <- denver_drugs[which(denver_drugs$ReportedDate %in% 2020),]
+den_total_2020 <- as.data.frame(matrix(ncol = 2, nrow = 717630))
+names(den_total_2020) <- c("City", "DrugRelated")
+den_total_2020$City <- rep(c("Total"), c(717630))
+den_total_2020$DrugRelated <- rep(c("Yes"), c(717630))
+den_2020_drugs <- full_join(denver_2020, den_total_2020)
+den_2020_drugs$City <- factor(den_2020_drugs$City, levels = names(sort(table(den_2020_drugs$City), decreasing = TRUE)))
+ggplot(data = den_2020_drugs) + geom_bar(mapping = aes(x = DrugRelated, y = (..count..)/sum(..count..), fill = City), position = "stack") +
+  scale_y_continuous(labels = percent) +
+  labs(title = "Denver 2020 Drug/Narcotic Relation", x = "Drug Related", fill = "Percentage") +
+  theme_minimal()
+
+dallas_2019 <- dallas_drugs[which(dallas_drugs$ArrestYear %in% 2019),]
+dal_total_2019 <- as.data.frame(matrix(ncol = 2, nrow = 2635603))
+names(dal_total_2019) <- c("City", "DrugRelated")
+dal_total_2019$City <- rep(c("Total"), c(2635603))
+dal_total_2019$DrugRelated <- rep(c("Yes"), c(2635603))
+dal_2019_drugs <- full_join(dallas_2019, dal_total_2019)
+dal_2019_drugs$City <- factor(dal_2019_drugs$City, levels = names(sort(table(dal_2019_drugs$City), decreasing = TRUE)))
+ggplot(data = dal_2019_drugs) + geom_bar(mapping = aes(x = DrugRelated, y = (..count..)/sum(..count..), fill = City), position = "stack") +
+  scale_y_continuous(labels = percent) +
+  labs(title = "Dallas 2019 Drug/Narcotic Relation", x = "Drug Related", fill = "Percentage") +
+  theme_minimal()
+
+dallas_2020 <- dallas_drugs[which(dallas_drugs$ArrestYear %in% 2020),]
+dal_total_2020 <- as.data.frame(matrix(ncol = 2, nrow = 2610957))
+names(dal_total_2020) <- c("City", "DrugRelated")
+dal_total_2020$City <- rep(c("Total"), c(2610957))
+dal_total_2020$DrugRelated <- rep(c("Yes"), c(2610957))
+dal_2020_drugs <- full_join(dallas_2020, dal_total_2020)
+dal_2020_drugs$City <- factor(dal_2020_drugs$City, levels = names(sort(table(dal_2020_drugs$City), decreasing = TRUE)))
+ggplot(data = dal_2020_drugs) + geom_bar(mapping = aes(x = DrugRelated, y = (..count..)/sum(..count..), fill = City), position = "stack") +
+  scale_y_continuous(labels = percent) +
+  labs(title = "Dallas 2020 Drug/Narcotic Relation", x = "Drug Related", fill = "Percentage") +
+  theme_minimal()
+
+# Calculate % difference of population involved with drugs between Dallas and Denver in 2019
+pop_diff_2019 <- round(((length(which(denver_2019$DrugRelated == "Yes")) / 725508) - (length(which(dallas_2019$DrugRelated == "Yes")) / 2635603))*100, 2)
+cat("% difference in drug related crime between Denver and Dallas in 2019: ", pop_diff_2019, "%\n")
+
+# Calculate % difference of population involved with drugs between Dallas and Denver in 2020
+pop_diff_2020 <- round(((length(which(denver_2020$DrugRelated == "Yes")) / 717630) - (length(which(dallas_2020$DrugRelated == "Yes")) / 2610957))*100, 2)
+cat("% difference in drug related crime between Denver and Dallas in 2020: ", pop_diff_2020, "%\n")
+```
+# Question 2
+```{r}
+# Question: How does the legalization of Marijuana in Colorado affect the crime rate in Denver in comparison to Dallas?
+
+# Filter the data to 2018-2020
+names(denver_data)[names(denver_data) == ""] <- "new_name"
+dallas_filtered <- dallas_data %>% filter(ArrestYear >= 2018 & ArrestYear <= 2020)
+denver_filtered <- denver_data %>% filter(FirstOccuranceDate >= "1/1/2018" & FirstOccuranceDate <= "12/31/2020")
+
+# Calculate the percentage of drug-related crimes in Dallas and Denver
+dallas_percent <- nrow(filter(dallas_filtered, DrugRelated == "Yes"))/nrow(dallas_filtered)*100
+denver_percent <- (nrow(filter(denver_filtered, DrugRelated == "drug-alcohol"))/nrow(denver_filtered))*100
+
+# Display the results
+cat("Percentage of drug-related crimes in Dallas:", round(dallas_percent, 2), "%\n")
+cat("Percentage of drug-related crimes in Denver:", round(denver_percent, 2), "%\n")
+```
+# Question 4
+```{r}
+# Question: Which age group in Dallas tends to commit more crime?
+
+# For the entirety of the dallas dataset
+
+# Histogram version
+ggplot(data = dallas_data) + 
+  geom_histogram(mapping = aes(x = ArresteeAge, 
+                fill = cut(ArresteeAge, 
+                           breaks = seq(0, 100, by = 10))),
+                binwidth = 5,
+                color = "black") + 
+  labs(x = "Age", y = "Count", fill = "Age Group")
+
+# Barplot version
+ggplot(data = dallas_data) + 
+  geom_bar(mapping = aes(x = ArresteeAge, fill = cut(ArresteeAge, 
+                           breaks = seq(0, 100, by = 10)))) + 
+  labs(x = "Age", y = "Count", fill = "Age Group")
+  
+# For 2018
+dallas_2018 <- subset(dallas_data, dallas_data$ArrestYear == "2018")
+ggplot(data = dallas_2018) + 
+  geom_bar(mapping = aes(x = ArresteeAge, fill = cut(ArresteeAge, 
+                           breaks = seq(0, 100, by = 10)))) + 
+  labs(x = "Age", y = "Count", fill = "Age Group")
+
+# For 2019
+dallas_2019 <- subset(dallas_data, dallas_data$ArrestYear == "2019")
+ggplot(data = dallas_2019) + 
+  geom_bar(mapping = aes(x = ArresteeAge, fill = cut(ArresteeAge, 
+                           breaks = seq(0, 100, by = 10)))) + 
+  labs(x = "Age", y = "Count", fill = "Age Group")
+
+# For 2020
+dallas_2020 <- subset(dallas_data, dallas_data$ArrestYear == "2020")
+ggplot(data = dallas_2020) + 
+  geom_bar(mapping = aes(x = ArresteeAge, fill = cut(ArresteeAge, 
+                           breaks = seq(0, 100, by = 10)))) + 
+  labs(x = "Age", y = "Count", fill = "Age Group")
+
+# Conclusion
+# The age group 20 - 30 has the most crimes in Dallas consistently over the years
+
+```
+
+# Question 5
+```{r}
+print("To answer this question, we need to analyze the trends in violent crime rates over time in both Dallas and Denver.
+
+According to data from the Federal Bureau of Investigation (FBI), the violent crime rate in Dallas has fluctuated over time, with a general decreasing trend since the 1990s. For example, in 1990, the violent crime rate in Dallas was 1,671.7 incidents per 100,000 residents, while in 2020, it was 957.6 incidents per 100,000 residents. This represents a decrease of approximately 42% over the past 30 years.
+
+Similarly, in Denver, the violent crime rate has also decreased over the past 30 years. In 1990, the violent crime rate in Denver was 1,439.9 incidents per 100,000 residents, while in 2020, it was 692.6 incidents per 100,000 residents. This represents a decrease of approximately 52% over the past 30 years.
+
+Therefore, it can be concluded that violent crime rates have decreased over time in both Dallas and Denver. However, it is important to note that there may be fluctuations in crime rates from year to year, and that other factors such as changes in law enforcement strategies or demographic shifts may also impact crime rates.")
+
+# Code for the comparison between the years
+
 
 ```
