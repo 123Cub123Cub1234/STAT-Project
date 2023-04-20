@@ -1,318 +1,121 @@
 ---
-title: "STAT Project Group 5"
+title: "Avinash_Sriram_HW6"
 author: "Avinash Sriram"
 date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
-# Data Preparation
-```{r}
-setwd("C:\\Users\\NashS\\OneDrive\\Documents\\STAT 3355")
-
-dallas_data <- read.csv("dallas_crime.csv")
-denver_data <- read.csv("denver_data.csv")
-
-names(dallas_data) <- c("IncidentNum", "ArrestYear", "ArrestDate", "ArrestTime", "ArrestAddress", "ArrestZipCode", "Latitude", "Longitude", "ArrestCity", "ArrestState", "ArrestDay", "ArrestLocation", "ArrestWeapon", "ArresteeAge", "ArresteeRace", "ArresteeSex", "DrugRelated", "DrugType")
-
-names(denver_data) <- c("IncidentId", "OffenseId", "OffenseCode", "OffenseCodeExtension", "OffenseTypeId", "DrugRelated", "FirstOccuranceDate", "LastOccuranceDate", "ReportedDate", "IncidentAddress", "Geo_x", "Geo_y", "Geo_lon", "Geo-lat", "DistrictId", "PrecinctId", "NeighborhoodId", "IsCrime", "IsTraffic", "VictimCount")
-
-# Since Denver is from 2018-2020
-dallas_data <- subset(dallas_data, dallas_data$ArrestYear >= 2018)
-
-# denver_data <- denver_data[, c(- 1, - 2, - 3, - 4)]
-# dallas_data <- dallas_data[, c(-1, -7, -8, -10)]
-```
-
-# Load Necessary Packages
-```{r}
-library(ggplot2)
-library(dplyr)
-library(stringr)
-library(scales)
-library(ggmap)
-```
-
 # Question 1
+# The approach for this problem was to get the z-score for the problem then use the pnorm function to get the probability
 ```{r}
-# Question: How does the % of the population in Dallas compare to Denver with relation to the drug/narcotic violations?
+pop_mean <- 256000 / 16000.00
+sample_size <- 34
+pop_sd <- sqrt(256000 / (16000)^2)
 
-# Filter to find necessary info
-denver_drugs <- filter(denver_data, DrugRelated == "drug-alcohol")
-dallas_drugs <- filter(dallas_data, DrugRelated == "Yes")
-denver_drugs$ReportedDate <- format(as.Date(denver_drugs$ReportedDate, format =  "%m/%d/%Y"), "%Y")
-denver_drugs <- denver_drugs[which(denver_drugs$OffenseTypeId != "liquor-possession"),]
-denver_drugs <- denver_drugs[which(denver_drugs$OffenseTypeId != "liquor-sell"),]
-dallas_data[dallas_data == ""] <- NA
-denver_drugs$DrugRelated <- str_replace(denver_drugs$DrugRelated, "drug-alcohol", "Yes")
+sample_mean <- 16.01
 
+z_score <- (sample_mean - pop_mean) / (pop_sd / sqrt(sample_size))
 
-# Removed values not connect to drugs
+q1_prob <- pnorm(z_score, lower.tail = FALSE)
 
-# Changed Values so it would match up with dallas_data
-# Joined both data sets
-City = c("Denver")
-denver_drugs <- cbind(denver_drugs, City)
-City = c("Dallas")
-
-dallas_drugs <- cbind(dallas_drugs, City)
-denver_2019 <- denver_drugs[which(denver_drugs$ReportedDate %in% 2019),]
-den_total_2019 <- as.data.frame(matrix(ncol = 2, nrow = 725508))
-names(den_total_2019) <- c("City", "DrugRelated")
-den_total_2019$City <- rep(c("Total"), c(725508))
-den_total_2019$DrugRelated <- rep(c("Yes"), c(725508))
-den_2019_drugs <- full_join(denver_2019, den_total_2019)
-den_2019_drugs$City <- factor(den_2019_drugs$City, levels = names(sort(table(den_2019_drugs$City), decreasing = TRUE)))
-ggplot(data = den_2019_drugs) + geom_bar(mapping = aes(x = DrugRelated, y = (..count..)/sum(..count..), fill = City), position = "stack") +
-  scale_y_continuous(labels = percent) +
-  labs(title = "Denver 2019 Drug/Narcotic Relation", x = "Drug Related", fill = "Percentage") +
-  theme_minimal()
-
-
-denver_2020 <- denver_drugs[which(denver_drugs$ReportedDate %in% 2020),]
-den_total_2020 <- as.data.frame(matrix(ncol = 2, nrow = 717630))
-names(den_total_2020) <- c("City", "DrugRelated")
-den_total_2020$City <- rep(c("Total"), c(717630))
-den_total_2020$DrugRelated <- rep(c("Yes"), c(717630))
-den_2020_drugs <- full_join(denver_2020, den_total_2020)
-den_2020_drugs$City <- factor(den_2020_drugs$City, levels = names(sort(table(den_2020_drugs$City), decreasing = TRUE)))
-ggplot(data = den_2020_drugs) + geom_bar(mapping = aes(x = DrugRelated, y = (..count..)/sum(..count..), fill = City), position = "stack") +
-  scale_y_continuous(labels = percent) +
-  labs(title = "Denver 2020 Drug/Narcotic Relation", x = "Drug Related", fill = "Percentage") +
-  theme_minimal()
-
-dallas_2019 <- dallas_drugs[which(dallas_drugs$ArrestYear %in% 2019),]
-dal_total_2019 <- as.data.frame(matrix(ncol = 2, nrow = 2635603))
-names(dal_total_2019) <- c("City", "DrugRelated")
-dal_total_2019$City <- rep(c("Total"), c(2635603))
-dal_total_2019$DrugRelated <- rep(c("Yes"), c(2635603))
-dal_2019_drugs <- full_join(dallas_2019, dal_total_2019)
-dal_2019_drugs$City <- factor(dal_2019_drugs$City, levels = names(sort(table(dal_2019_drugs$City), decreasing = TRUE)))
-ggplot(data = dal_2019_drugs) + geom_bar(mapping = aes(x = DrugRelated, y = (..count..)/sum(..count..), fill = City), position = "stack") +
-  scale_y_continuous(labels = percent) +
-  labs(title = "Dallas 2019 Drug/Narcotic Relation", x = "Drug Related", fill = "Percentage") +
-  theme_minimal()
-
-dallas_2020 <- dallas_drugs[which(dallas_drugs$ArrestYear %in% 2020),]
-dal_total_2020 <- as.data.frame(matrix(ncol = 2, nrow = 2610957))
-names(dal_total_2020) <- c("City", "DrugRelated")
-dal_total_2020$City <- rep(c("Total"), c(2610957))
-dal_total_2020$DrugRelated <- rep(c("Yes"), c(2610957))
-dal_2020_drugs <- full_join(dallas_2020, dal_total_2020)
-dal_2020_drugs$City <- factor(dal_2020_drugs$City, levels = names(sort(table(dal_2020_drugs$City), decreasing = TRUE)))
-ggplot(data = dal_2020_drugs) + geom_bar(mapping = aes(x = DrugRelated, y = (..count..)/sum(..count..), fill = City), position = "stack") +
-  scale_y_continuous(labels = percent) +
-  labs(title = "Dallas 2020 Drug/Narcotic Relation", x = "Drug Related", fill = "Percentage") +
-  theme_minimal()
-
-# Calculate % difference of population involved with drugs between Dallas and Denver in 2019
-pop_diff_2019 <- round(((length(which(denver_2019$DrugRelated == "Yes")) / 725508) - (length(which(dallas_2019$DrugRelated == "Yes")) / 2635603))*100, 2)
-cat("% difference in drug related crime between Denver and Dallas in 2019: ", pop_diff_2019, "%\n")
-
-# Calculate % difference of population involved with drugs between Dallas and Denver in 2020
-pop_diff_2020 <- round(((length(which(denver_2020$DrugRelated == "Yes")) / 717630) - (length(which(dallas_2020$DrugRelated == "Yes")) / 2610957))*100, 2)
-cat("% difference in drug related crime between Denver and Dallas in 2020: ", pop_diff_2020, "%\n")
+print(signif(q1_prob), digits = 4)
 ```
+
 # Question 2
+# The approach for this problem was get the sample mean and standard deviation and apply it. I manipulated the diff norm() methods to help get the solutions
 ```{r}
-# Question: How does the legalization of Marijuana in Colorado affect the crime rate in Denver in comparison to Dallas?
+# Part (A)
+mu <- 8.2
+pop_sd <- 1
+sample_size <- 60
+sample_sd <- 1 / sqrt(60)
+sample_mean <- 8.2
 
-# Filter the data to 2018-2020
-names(denver_data)[names(denver_data) == ""] <- "new_name"
-dallas_filtered <- dallas_data %>% filter(ArrestYear >= 2018 & ArrestYear <= 2020)
-denver_filtered <- denver_data %>% filter(FirstOccuranceDate >= "1/1/2018" & FirstOccuranceDate <= "12/31/2020")
+print(signif(sample_mean), digits = 4)
+print(signif(sample_sd), digits = 4)
 
-# Calculate the percentage of drug-related crimes in Dallas and Denver
-dallas_percent <- nrow(filter(dallas_filtered, DrugRelated == "Yes"))/nrow(dallas_filtered)*100
-denver_percent <- (nrow(filter(denver_filtered, DrugRelated == "drug-alcohol"))/nrow(denver_filtered))*100
+# Part (B)
+percentile_z_score <- qnorm(0.9)
+sample_mean <- (percentile_z_score * sample_sd) + mu
+print(signif(sample_mean), digits = 5)
 
-# Display the results
-cat("Percentage of drug-related crimes in Dallas:", round(dallas_percent, 2), "%\n")
-cat("Percentage of drug-related crimes in Denver:", round(denver_percent, 2), "%\n")
+# Part (C)
+one_sd <- pnorm(1) - pnorm(-1)
+two_sd <- pnorm(2) - pnorm(-2)
+three_sd <- pnorm(3) - pnorm(-3)
+
+print(signif(one_sd), digits = 4)
+print(signif(two_sd), digits = 4)
+print(signif(three_sd), digits = 4)
+
+# Part (D)
+print("The empirical rule (68-95-99.7) would allow for part 2c 
+      to be completed without any work. This is because one 
+      standard deviation (sd) would result in approximately 68% 
+      of the data falling within in it, 95% of the data for 
+      2 standard deviations, and 99.7% for three.")
 ```
-# Question 3
-```{r}
 
+# Question 3
+# The approach for this problem was similar to that of problem 2. I manipulated the mean and standard deviation values for parts C and D as it was asking for the total of the entire sample so I multiplied by 75
+```{r}
+# Part (A)
+# CLT
+sample_mean <- 5 * 0.5
+pop_sd <- sqrt(sample_mean * (1 - 0.5))
+sample_sd <- pop_sd / sqrt(75)
+
+z_score <- (2.25 - sample_mean) / sample_sd
+
+prob <- pnorm(z_score)
+
+print(signif(prob), digits = 4)
+
+# Part (B)
+percentile_mean <- qnorm(.9, sample_mean, sample_sd)
+print(signif(percentile_mean), digits = 5)
+
+# Part (C)
+prob <- pnorm((200 / 75), sample_mean, sample_sd)
+print(signif(prob), digits = 4)
+
+# Part (D)
+percentile_prob <- qnorm(0.9, 75 * sample_mean, 75 * sample_sd)
+print(percentile_prob)
 ```
 
 # Question 4
+# For this one, I used the pexp method for part A and then used CLT for part B and compared the probabilities
 ```{r}
-# Question: Which age group in Dallas tends to commit more crime?
+# Part (A)
+lambda <- 1 / 2
+prob <- pexp(2.5, lambda, lower.tail = FALSE)
+print(signif(prob), digits = 4)
 
-# For the entirety of the dallas dataset
+# Part (B)
+# CLT
+sample_mean <- 2
+sd <- 2 / sqrt(80)
+z_score <- (2.5 - sample_mean) / (sd)
+prob <- pnorm(z_score, lower.tail = FALSE)
+print(signif(prob), digits = 3)
 
-# Histogram version
-ggplot(data = dallas_data) + 
-  geom_histogram(mapping = aes(x = ArresteeAge, 
-                fill = cut(ArresteeAge, 
-                           breaks = seq(0, 100, by = 10))),
-                binwidth = 5,
-                color = "black") + 
-  labs(x = "Age", y = "Count", fill = "Age Group")
-
-# Barplot version
-ggplot(data = dallas_data) + 
-  geom_bar(mapping = aes(x = ArresteeAge, fill = cut(ArresteeAge, 
-                           breaks = seq(0, 100, by = 10)))) + 
-  labs(x = "Age", y = "Count", fill = "Age Group")
-  
-# For 2018
-dallas_2018 <- subset(dallas_data, dallas_data$ArrestYear == "2018")
-ggplot(data = dallas_2018) + 
-  geom_bar(mapping = aes(x = ArresteeAge, fill = cut(ArresteeAge, 
-                           breaks = seq(0, 100, by = 10)))) + 
-  labs(x = "Age", y = "Count", fill = "Age Group")
-
-# For 2019
-dallas_2019 <- subset(dallas_data, dallas_data$ArrestYear == "2019")
-ggplot(data = dallas_2019) + 
-  geom_bar(mapping = aes(x = ArresteeAge, fill = cut(ArresteeAge, 
-                           breaks = seq(0, 100, by = 10)))) + 
-  labs(x = "Age", y = "Count", fill = "Age Group")
-
-# For 2020
-dallas_2020 <- subset(dallas_data, dallas_data$ArrestYear == "2020")
-ggplot(data = dallas_2020) + 
-  geom_bar(mapping = aes(x = ArresteeAge, fill = cut(ArresteeAge, 
-                           breaks = seq(0, 100, by = 10)))) + 
-  labs(x = "Age", y = "Count", fill = "Age Group")
-
-# Conclusion
-# The age group 20 - 30 has the most crimes in Dallas consistently over the years
-
+# Part (C)
+print("Part A only looks at one specific individual whereas 
+      Part B looks at the entire customer set. This would result 
+      in a difference in probabilities as the 80 customers would 
+      be having less variability than the individual therefore 
+      would result in a lower probability.")
 ```
 
 # Question 5
+# The approach for this question was to do the problem by hand at first then translate it to R
 ```{r}
-print("To answer this question, we need to analyze the trends in violent crime rates over time in both Dallas and Denver.
-
-According to data from the Federal Bureau of Investigation (FBI), the violent crime rate in Dallas has fluctuated over time, with a general decreasing trend since the 1990s. For example, in 1990, the violent crime rate in Dallas was 1,671.7 incidents per 100,000 residents, while in 2020, it was 957.6 incidents per 100,000 residents. This represents a decrease of approximately 42% over the past 30 years.
-
-Similarly, in Denver, the violent crime rate has also decreased over the past 30 years. In 1990, the violent crime rate in Denver was 1,439.9 incidents per 100,000 residents, while in 2020, it was 692.6 incidents per 100,000 residents. This represents a decrease of approximately 52% over the past 30 years.
-
-Therefore, it can be concluded that violent crime rates have decreased over time in both Dallas and Denver. However, it is important to note that there may be fluctuations in crime rates from year to year, and that other factors such as changes in law enforcement strategies or demographic shifts may also impact crime rates.")
-
-# Code for the comparison between the years
-
-
-```
-
-# Question 6
-```{r}
-# Question: What period of time is more probable to have crime occur in Dallas & Denver (Day of the week)
-
-# By day for Dallas
-
-dallas_sundays_sum <- sum(dallas_data$ArrestDay == "Sun")
-dallas_mondays_sum <- sum(dallas_data$ArrestDay == "Mon")
-dallas_tuesdays_sum <- sum(dallas_data$ArrestDay == "Tue")
-dallas_wednesdays_sum <- sum(dallas_data$ArrestDay == "Wed")
-dallas_thursdays_sum <- sum(dallas_data$ArrestDay == "Thu")
-dallas_fridays_sum <- sum(dallas_data$ArrestDay == "Fri")
-dallas_saturdays_sum <- sum(dallas_data$ArrestDay == "Sat")
-
-dallas_days_df <- data.frame(c(dallas_sundays_sum, dallas_mondays_sum, dallas_tuesdays_sum, dallas_wednesdays_sum, dallas_thursdays_sum, dallas_fridays_sum, dallas_saturdays_sum), labels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
-names(dallas_days_df) <- c("Counts", "Labels")
-
-ggplot(dallas_days_df, aes(x = Counts, y = Labels, fill = Labels)) +
-  geom_bar(stat = "identity") + 
-  labs(title = "Dallas Bar Chart of Days of Week vs Crime Counts", xlab = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"), ylab = "Count") 
-
-# By date for Denver
-denver_data$ReportedDate <- as.Date(denver_data$ReportedDate, format = "%m/%d/%Y")
-denver_data$dayOfWeek <- weekdays(denver_data$ReportedDate)
-
-denver_sundays_sum <- sum(denver_data$dayOfWeek == "Sunday")
-denver_mondays_sum <- sum(denver_data$dayOfWeek == "Monday")
-denver_tuesdays_sum <- sum(denver_data$dayOfWeek == "Tuesday")
-denver_wednesdays_sum <- sum(denver_data$dayOfWeek == "Wednesday")
-denver_thursdays_sum <- sum(denver_data$dayOfWeek == "Thursday")
-denver_fridays_sum <- sum(denver_data$dayOfWeek == "Friday")
-denver_saturdays_sum <- sum(denver_data$dayOfWeek == "Saturday")
-
-denver_days_df <- data.frame(c(denver_sundays_sum, denver_mondays_sum, denver_tuesdays_sum, denver_wednesdays_sum, denver_thursdays_sum, denver_fridays_sum, denver_saturdays_sum), labels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
-names(denver_days_df) <- c("Counts", "Labels")
-
-ggplot(denver_days_df, aes(x = Counts, y = Labels, fill = Labels)) +
-  geom_bar(stat = "identity") +
-  labs(title = "Denver Bar Chart of Days of Week vs Crime Counts", xlab = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"), ylab = "Count")
-
-# Dallas Chi-Square Test
-dallas_crime_table <- table(dallas_days_df$Labels, dallas_days_df$Counts)
-dallas_chi_result <- chisq.test(dallas_crime_table)
-print(dallas_chi_result)
-# P-value comes to 0.227 so since it is greater than 0.05, there is not enough evidence to disprove the null hypothesis (null hypothesis: There is no association between the crime count and days of week)
-
-# Denver Chi-Square Test
-denver_crime_table <- table(denver_days_df$Labels, denver_days_df$Counts)
-denver_chi_result <- chisq.test(denver_crime_table)
-print(denver_chi_result)
-# P-value also comes to 0.227 so since it is greater than 0.05, there is not enough evidence to disprove the null hypothesis (null hypothesis: There is no association between the crime count and days of week)
-```
-
-# Question 7
-```{r}
-# Question: Which ethnic group has the highest crime related cases in Dallas?
-
-# Group the data by ethnicity and calculate the total number of crime-related cases for each ethnicity
-
-ethnicity_counts <- data.frame(table(dallas_data$ArresteeRace))
-ethnicity_counts <- na.omit(ethnicity_counts)
-names(ethnicity_counts) <- c("ArresteeRace", "Total")
-ethnicity_counts <- ethnicity_counts[order(-ethnicity_counts$Total), ]
-
-# Create a bar plot of the total number of crime-related cases by ethnicity
-ggplot(data = ethnicity_counts, aes(x = ArresteeRace, y = Total)) +
-  geom_bar(stat = "identity") + 
-  labs(x = "Race", y = "Count", title = "Total Number of Dallas Crimes Related by Race") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-# Calculate percentage of each group
-ethnicity_counts$Percent <- ethnicity_counts$Total / sum(ethnicity_counts$Total) * 100
-
-# Create pie chart
-ggplot(ethnicity_counts, aes(x = "", y = Percent, fill = ArresteeRace)) +
-  geom_bar(stat = "identity") +
-  coord_polar(theta = "y") +
-  labs(title = " Pie Chart of Dallas Crimes Related by Race") +
-  theme_void()
-```
-
-# Question 8
-```{r}
-```
-
-# Question 9
-```{r}
-# Question: How does the crime rate in a low economic area of Dallas compare to a high economic area? 
-# Changed to: Which street has the most common crimes and compare it to drug crimes
-
-address_counts <- table(dallas_data$ArrestAddress)
-address_counts <- sort(address_counts, decreasing = TRUE)
-address_df <- data.frame(address_counts)
-names(address_df) <- c("Address", "Count")
-
-drug_dallas <- subset(dallas_data, dallas_data$DrugRelated == "Yes")
-drug_addy_counts <- table(drug_dallas$ArrestAddress)
-drug_addy_counts <- sort(drug_addy_counts, decreasing = TRUE)
-drug_address_df <- data.frame(drug_addy_counts)
-names(drug_address_df) <- c("Address", "Count")
-
-top_10_addy <- head(address_df, 10)
-top_10_drugAddy <- head(drug_address_df, 10)
-
-ggplot(data = top_10_addy, aes(x = Address, y = Count, fill = Address)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(title = "Top 10 Streets With Highest Counts of General Crime") + geom_text(data = top_10_addy, aes(label = Count), size=3, vjust=1.5)
-
-ggplot(data = top_10_drugAddy, aes(x = Address, y = Count, fill = Address)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(title = "Top 10 Streets With Highest Counts of Drug Crime") + geom_text(data = top_10_drugAddy, aes(label = Count), size=3, vjust=1.5)
-
-# Merge Dataframes for Displaying Top 10 Violent Streets with Drug Relations
-top_10_merge_df <- merge(top_10_addy, drug_address_df, by = "Address", all.x = TRUE)
-top_10_merge_df[is.na(top_10_merge_df)] <- 0
-names(top_10_merge_df) <- c("Address", "Count", "DrugCount")
-
-ggplot(data = top_10_merge_df, aes(x = Address, y = Count, fill = Address)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + labs(title = "Top 10 Streets With Highest Counts of General Crime With Drug Related Highlighted") + geom_text(data = top_10_merge_df, aes(label = DrugCount), size=3, vjust=1.5)
-
-```
-
-# Question 10
-```{r}
+p <- 22 / 30
+n <- 30
+z <- qnorm(0.975)
+upper <- p + z * (sqrt((p * (1 - p)) / n))
+lower <- p - z * (sqrt((p * (1 - p)) / n))
+confidence_interval <- c(lower,upper)
+print(signif(confidence_interval), digits = 4)
 ```
